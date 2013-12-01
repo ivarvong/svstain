@@ -2,7 +2,6 @@ require 'sinatra/base'
 require 'redis'
 require 'connection_pool'
 require 'json'
-require 'dotenv'
 
 if !ENV['REDISCLOUD_URL'].nil?
 	redis_connection_string = ENV["REDISCLOUD_URL"] 
