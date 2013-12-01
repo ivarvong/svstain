@@ -1,6 +1,9 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    connection_pool (1.1.0)
+    puma (2.6.0)
+      rack (>= 1.1, < 2.0)
     rack (1.5.2)
     rack-protection (1.5.1)
       rack
@@ -15,5 +18,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  connection_pool
+  puma
   redis
   sinatra
