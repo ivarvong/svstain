@@ -45,7 +45,7 @@ if (readCookie('_ras_sid') === null) {
 	sid = readCookie('_ras_sid');
 }
 jQuery(document).ready(function() {
-	jQuery.post('http://localhost:4567/track/json', JSON.stringify({
+	jQuery.post('http://localhost:4567/track/test.com/json', JSON.stringify({
 		url: window.location.pathname,
 		ref: document.referrer,
 		uid: uid,
