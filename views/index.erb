@@ -1,0 +1,55 @@
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+function createCookie(name,value,days) {
+	if (days) {
+		var date = new Date();
+		date.setTime(date.getTime()+(days*24*60*60*1000));
+		var expires = "; expires="+date.toGMTString();
+	}
+	else var expires = "";
+	document.cookie = name+"="+value+expires+"; path=/";
+}
+
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
+}
+function S4() {
+   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+}
+function make_uid() {
+   return ('u'+S4()+S4()+S4()+S4());
+}
+function make_sid() {
+   return ('s'+S4()+S4()+S4()+S4());
+}
+
+uid = null;
+sid = null;
+if (readCookie('_ras_uid') === null) {	
+	uid = make_uid();
+	createCookie('_ras_uid', uid, 730);
+} else {
+	uid = readCookie('_ras_uid');
+}
+if (readCookie('_ras_sid') === null) {	
+	sid = make_sid();
+	createCookie('_ras_sid', sid, 0);
+} else {
+	sid = readCookie('_ras_sid');
+}
+jQuery(document).ready(function() {
+	jQuery.post('http://localhost:4567/track/json', JSON.stringify({
+		url: window.location.pathname,
+		ref: document.referrer,
+		uid: uid,
+		sid: sid
+	}));
+})
+</script>
