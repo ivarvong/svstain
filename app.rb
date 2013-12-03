@@ -2,6 +2,8 @@ require 'sinatra/base'
 require 'redis'
 require 'connection_pool'
 require 'json'
+require 'celluloid/autostart'
+require 'active_support/all'
 
 if !ENV['REDISCLOUD_URL'].nil?
 	redis_connection_string = ENV["REDISCLOUD_URL"] 
@@ -101,6 +103,54 @@ class App < Sinatra::Base
 		bin_width = (1.0*(max_time-min_time)/bin_count).to_i
 
 		data = query(params['site'], min_time, max_time)
+	end
+
+	get '/example' do
+		erb :line_example
+	end
+
+	get '/:site/today' do
+		start_time = Time.now.in_time_zone('Pacific Time (US & Canada)').at_midnight().to_i # UTC seconds for the most recent midnight in Pacific Time.
+		end_time = start_time + 24.hours.to_i - 1
+		records = query(params['site'], start_time, end_time)
+		bin_width = 60 # seconds
+		bins = (start_time..end_time).step(bin_width).inject({}){|obj, start_time| 
+			obj[[start_time, start_time+bin_width-1]] = {records: [], count: 0}
+			obj
+		}
+		bin_ranges = bins.map{|bin_range, _| bin_range }
+
+		records.each do |record|
+			bin_range = bin_ranges.select{ |bin_start, bin_end| 				
+				bin_start <= record['t'] and record['t'] <= bin_end # inclusive on each end because bin stops before next starts
+			}.first			
+			#puts "#{bin_range.first} contains #{record['t']}"
+			#bins[bin_range][:records] << record			
+			bins[bin_range][:count] += 1
+		end
+		
+		output = bins.keys.map{|bin_range|
+			[bin_range.first, bins[bin_range][:count]]
+		}.to_json
+
+		erb :site_today, locals: {site: params['site'], output: output}
+	end
+
+	get "/:site/daily-1" do
+		min_time = Time.now.utc.to_i - 1.5*43200
+		data = query(params['site'], min_time)	
+		total_views = data.count
+		average_rate = total_views/(1.0*data.last['t']-data.first['t'])
+		puts ({total: total_views, average_rate: average_rate}.to_json)
+		data.map!{|event|
+			delta = event['t']-min_time
+			total_so_far = data.select{|item| item['t'] < event['t']}.count
+			pace = (total_so_far) - (average_rate*delta)
+			event.merge!({delta: delta, total_so_far: total_so_far, pace: pace})
+		}
+		data.map{|event|
+			[event['t'], event[:delta], event[:total_so_far], event[:pace]].join("\t")
+		}.join("\n")
 	end
 
 end
