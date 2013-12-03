@@ -114,24 +114,35 @@ class App < Sinatra::Base
 		end_time = start_time + 24.hours.to_i - 1
 		records = query(params['site'], start_time, end_time)
 		bin_width = 60 # seconds
+
+		pre_make_bins = Time.now.utc.to_f
 		bins = (start_time..end_time).step(bin_width).inject({}){|obj, start_time| 
 			obj[[start_time, start_time+bin_width-1]] = {records: [], count: 0}
 			obj
 		}
-		bin_ranges = bins.map{|bin_range, _| bin_range }
+		#bin_ranges = bins.map{|bin_range, _| bin_range }
+		#puts "making bins: #{Time.now.utc.to_f - pre_make_bins}"
 
+		#pre_records = Time.now.utc.to_f
 		records.each do |record|
-			bin_range = bin_ranges.select{ |bin_start, bin_end| 				
-				bin_start <= record['t'] and record['t'] <= bin_end # inclusive on each end because bin stops before next starts
-			}.first			
+			#bin_range = bin_ranges.select{ |bin_start, bin_end| 				
+			#	bin_start <= record['t'] and record['t'] <= bin_end # inclusive on each end because bin stops before next starts
+			#}.first			
+
+			start_time = Time.at(record['t']).change(sec: 0).to_i # find the "left hand side" of the current minute
+			bin_range = [start_time, start_time+bin_width-1]      # WARNIGN! this will break if the bin_width isnt 60 :(
+
 			#puts "#{bin_range.first} contains #{record['t']}"
 			#bins[bin_range][:records] << record			
 			bins[bin_range][:count] += 1
 		end
-		
+		#puts "sorting records into bins: #{Time.now.utc.to_f - pre_records}"
+
+		#pre_remap=Time.now.utc.to_f
 		output = bins.keys.map{|bin_range|
 			[bin_range.first, bins[bin_range][:count]]
 		}.to_json
+		#puts "remapping bins and to_json: #{Time.now.utc.to_f - pre_remap}"
 
 		erb :site_today, locals: {site: params['site'], output: output}
 	end
