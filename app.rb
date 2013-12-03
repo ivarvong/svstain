@@ -32,7 +32,7 @@ class App < Sinatra::Base
 	end
 
 	get '/' do
-		erb :index
+		"Hello there."
 	end
 
 	post '/track/:site/json' do				
@@ -93,6 +93,17 @@ class App < Sinatra::Base
 		erb :site_sessions, locals: { data: data, stats: stats }
 	end
 
+	get '/:site/top/:seconds?' do
+		seconds = params['seconds'].to_i
+		seconds = 3600 if seconds == 0 # 10 minutes if no param
+		data = query(params['site'], Time.now.utc.to_i-seconds, Time.now.utc.to_i)
+		data = data.inject({}){|obj, item|
+			obj[item['url']] ||= 0
+			obj[item['url']] += 1
+			obj
+		}.sort_by{|k, v| -v}
+		erb :top, locals: {data: data, seconds: seconds, site: params['site']}
+	end
 
 	get '/:site/recent/:seconds' do
 		bin_count = 50
@@ -105,13 +116,10 @@ class App < Sinatra::Base
 		data = query(params['site'], min_time, max_time)
 	end
 
-	get '/example' do
-		erb :line_example
-	end
 
-	get '/:site/today' do
-		
-		erb :site_today, locals: {site: params['site'], output: output}
+
+	get '/:site/today' do		
+		erb :site_today, locals: {site: params['site']}
 	end
 
 	get '/:site/v1/day/:yyyy/:mm/:dd' do
