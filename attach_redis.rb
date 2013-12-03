@@ -27,9 +27,6 @@ bins = data.inject({}){|obj, item|
 	{start_time: bin_start, events: bin, count: bin.count}
 }
 
-
-
-
 #puts values
 
 #@ticks = %w[▁ ▂ ▃ ▄ ▅ ▆ ▇]

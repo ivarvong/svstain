@@ -1,7 +1,47 @@
-<%= stats.to_json %>
-<hr>
+<style>
+.session {
+	width: 800px;
+	margin: 10px auto;
+	padding: 10px;
+	max-width: 100%;
+}
+.page {
+	border: 1px solid #CCC;
+	background: ;
+	padding: 0;
+	margin: 3px;
+	display: block;
+	background: #bdf5ff;
+}
+.home {
+	background: #f7d458;
+}
+.section {
+	background: #e6affd;
+}
+.today {
+	background: #55f188;
+}
+.time {
+	margin-right: 30px;
+}
+</style>
+
+<h3><%= stats.to_json %></h3>
 
 <% data.each do |session| %>
-	<%= session.to_json %>
-	<hr>
+	<div class="session session-<%= session[:sid] %>">
+		<%= session[:sid] %> : <b><%= session[:count] %></b> pages
+
+		<% start_time = (session[:urls].first).first %>
+		<% session[:urls].each do |page| %>
+			<% classes = [] %>
+			<% classes << 'section' if page.last.include?('/section/') %>
+			<% classes << 'home' if page.last == "/" %>
+			<% classes << 'today' if page.last.include?(Time.now.strftime("/%Y/%m/%d/")) %>
+			<div class="page <%= classes.join(' ') %>">
+				<span class="time"><%= page.first - start_time %> sec</span><%= page.last %>
+			</div>
+		<% end %>
+	</div>
 <% end %>

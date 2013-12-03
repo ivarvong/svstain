@@ -48,13 +48,17 @@
 		var h = 400 - m[0] - m[2]; // height
 		
 		// create a simple data array that we'll plot with a line (this array represents only the Y values, X will just be the index location)
-		var data = <%= output %>;
+		var today = <%= output_today %>;
+		var yesterday = <%= output_yesterday %>;
  
+ 		var today_start = today[0][0];
+ 		var yesterday_start = yesterday[0][0];
+
 		// X scale will fit all values from data[] within pixels 0-w
-		var x = d3.time.scale().domain([(new Date(1000*data[0][0])), (new Date(1000*data[data.length-1][0]))]).range([0, w]);
+		var x = d3.time.scale().domain([0, 24]).range([0, w]);
 
 		// automatically determining max range can work something like this
-		 var y = d3.scale.linear().domain([0, 25]).range([h, 0]);
+		var y = d3.scale.linear().domain([0, 25]).range([h, 0]);
  
 		// create a line function that can convert data[] into x and y points
 		var line = d3.svg.line()
@@ -64,8 +68,8 @@
 				var t = new Date(1000*d[0]);
 				console.log('x', d, d[0], x(d[0]), t);
 				// return the X coordinate where we want to plot this datapoint
-
-				return x(t); 
+				var hrs = (d[0]-today_start)/3600
+				return x(hrs); 
 			})
 			.y(function(d) { 
 				// verbose logging to show what's actually being done
