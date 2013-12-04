@@ -45,11 +45,15 @@
 	<script>		
 		var m = [80, 80, 80, 80]; // margins
 		var w = 1300 - m[1] - m[3]; // width
-		var h = 400 - m[0] - m[2]; // height
-				
-		var x = d3.scale.linear().domain([0, 24]).range([0, w]);		
-		var y = d3.scale.linear().domain([0, 25]).range([h, 0]);
- 
+		var h = 800 - m[0] - m[2]; // height
+		
+		var x = d3.scale.linear().domain([0, 24]).range([0, w]);				
+		<% if sum %>
+			var y = d3.scale.linear().domain([0, 10000]).range([h, 0]);
+		<% else %>		
+			var y = d3.scale.linear().domain([0, 25]).range([h, 0]);
+ 		<% end %>
+
 		var line = d3.svg.line()
 			.x(function(d) { 				
 				return x(d[0]); 
@@ -88,7 +92,18 @@
 		 				var hrs = (data[0]-yesterday_first)/3600;
 		 				return [hrs, data[1]];
 		 			});
+		 			
+		 			<% if sum %>
+		 			var current_sum = 0;
+		 			var yesterday_sum = _.map(yesterday_shifted, function(point, index) {
+		 				current_sum += point[1];
+		 				return [point[0], current_sum];
+		 			});
+		 			graph.append("svg:path").attr("d", line(yesterday_sum));
+		 			<% else %>
 		 			graph.append("svg:path").attr("d", line(yesterday_shifted));
+		 			<% end %>
+
 
 		 			var today = today_obj[0];
 		 			var today_first = today[0][0];
@@ -96,7 +111,17 @@
 		 				var hrs = (data[0]-today_first)/3600;
 		 				return [hrs, data[1]];
 		 			});
+		 			
+		 			<% if sum %>
+		 			var current_sum = 0;
+		 			var today_sum = _.map(today_shifted, function(point, index) {
+		 				current_sum += point[1];
+		 				return [point[0], current_sum];
+		 			});
+		 			graph.append("svg:path").attr("d", line(today_sum)).style('stroke', 'red');
+		 			<% else %>
 		 			graph.append("svg:path").attr("d", line(today_shifted)).style('stroke', 'red');
+		 			<% end %>
 		 			
 		 		});
 		 	});

@@ -116,8 +116,8 @@ class App < Sinatra::Base
 		data = query(params['site'], min_time, max_time)
 	end
 
-	get '/:site/today' do		
-		erb :site_today, locals: {site: params['site']}
+	get '/:site/today' do
+		erb :site_today, locals: {site: params['site'], sum: !params['sum'].nil?}				
 	end
 
 	get '/:site/v1/day/:datestr' do
