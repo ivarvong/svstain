@@ -116,45 +116,44 @@ class App < Sinatra::Base
 		data = query(params['site'], min_time, max_time)
 	end
 
-
-
 	get '/:site/today' do		
 		erb :site_today, locals: {site: params['site']}
 	end
 
-	get '/:site/v1/day/:yyyy/:mm/:dd' do
+	get '/:site/v1/day/:datestr' do
 		content_type 'text/json'
-
-		# UTC seconds for the most recent midnight in Pacific Time.
-		start_time = Time.new(params['yyyy'], params['mm'], params['dd']).in_time_zone('Pacific Time (US & Canada)')
-		puts start_time
-		start_time = start_time.at_midnight()
-		puts start_time
+		
+		start_time = Date.parse(params['datestr']).in_time_zone('Pacific Time (US & Canada)')		
+		start_time = start_time.at_midnight()		
 		start_time = start_time.to_i 
-		puts start_time
-
+		
 		end_time = start_time + 24.hours.to_i - 1
 		
 		records = query(params['site'], start_time, end_time)
+
+		processing_start = Time.now.utc.to_f
+
 		bin_width = 60 # seconds		
 		bins = (start_time..end_time).step(bin_width).inject({}){|obj, start_time| 
-			obj[[start_time, start_time+bin_width-1]] = {records: [], count: 0}
+			obj[start_time] = {records: [], count: 0}
 			obj
 		}
-		records.each do |record|
-			#bin_range = bin_ranges.select{ |bin_start, bin_end| 				
-			#	bin_start <= record['t'] and record['t'] <= bin_end
-			#}.first			
-			start_time = Time.at(record['t']).change(sec: 0).to_i # find the "left hand side" of the current minute
-			bin_range = [start_time, start_time+bin_width-1]      # WARNIGN! this will break if the bin_width isnt 60 :(
-
-			#bins[bin_range][:records] << record			
-			bins[bin_range][:count] += 1
+		records.each do |record|			
+			# find the "left hand side" of the current minute. 
+			# bin_width MUST BE 60 for this to work.
+			start_time = Time.at(record['t']).change(sec: 0).to_i 
+			bins[start_time][:count] += 1
 		end
 		
-		output = bins.keys.map{|bin_range|
-			[bin_range.first, bins[bin_range][:count]]
-		}.to_json
+		output = bins.keys.map{|start_time|
+			[start_time, bins[start_time][:count]]
+		}
+
+		output_str = output.to_json
+
+		puts "#{request.path} for #{records.count} events in #{Time.now.utc.to_f - processing_start} sec."
+
+		output_str
 	end
 
 	get "/:site/daily-1" do
