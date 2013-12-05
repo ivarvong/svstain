@@ -38,7 +38,7 @@ class App < Sinatra::Base
 	post '/track/:site/json' do				
 		request.body.rewind
 		body = request.body.read
-		data = (JSON.parse(body)).merge({t: Time.now.utc.to_i, id: get_id(), ip: request.ip})
+		data = (JSON.parse(body)).merge({t: Time.now.utc.to_i, id: get_id(), ip: request.ip, user_agent: request.user_agent})
 		data[:event] = 'page' if data[:event].nil?		
 		REDIS.with{ |redis| 
 			redis.zadd(params['site'], "#{data[:t]}", data.to_json)					
